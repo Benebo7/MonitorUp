@@ -12,3 +12,5 @@ email-validator
 multipart
 psycopg2-binary
 alembic
+apscheduler
+httpx

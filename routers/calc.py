@@ -1,7 +1,7 @@
 
 from fastapi import APIRouter, Depends
 from security import checkuser
-from database import get_session, Cadastro
+from database import get_session, User
 from sqlmodel import select
 
 
@@ -10,7 +10,7 @@ router = APIRouter(prefix="/calc", tags=["Calculadora"], dependencies=[Depends(c
 @router.post("/protected-route")
 def calculator(id: str = Depends(checkuser), n1: float = 0, n2: float = 0, session = Depends(get_session)):
 
-    statement = select(Cadastro).where(Cadastro.id == id)
+    statement = select(User).where(User.id == id)
     register = session.exec(statement).first()   
     data = register
     calc = n1 + n2

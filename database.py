@@ -17,6 +17,7 @@ class User(SQLModel, table=True):
 class Monitor(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id")
+    name: str
     url: str
     status_code: int
     last_checked: Optional[str] = None

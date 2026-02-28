@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Importa o metadata do seu model
-from database import Cadastro
+from database import User, Monitor
 from sqlmodel import SQLModel
 target_metadata = SQLModel.metadata
 # this is the Alembic Config object, which provides
