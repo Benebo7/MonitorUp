@@ -3,7 +3,8 @@ from database import get_session, Monitor
 import httpx
 from datetime import datetime
 from fastapi import HTTPException
-from sqlmodel import update
+from sqlmodel import update, select
+
 #from email_utils import send_email
 
 def check_sites():
@@ -27,11 +28,12 @@ def check_sites():
 
             
             
-            send_email(m.url, new_status)
+            #send_email(m.url, new_status)
 
         
         
         session.execute(update(Monitor).where(Monitor.id == m.id).values(status_code=new_status, last_checked=m.last_checked))  
+    session.commit()
             
     # 1. get all monitors from DB
     # 2. fetch each URL
