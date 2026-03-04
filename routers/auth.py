@@ -11,15 +11,17 @@ from database import get_session, User
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
-class LoginInput(BaseModel):
+class SignupInput(BaseModel):
     user: str
     email: str
     password: str
-
+class LoginInput(BaseModel):
+    email: str
+    password: str
 
 @router.post("/signup", status_code=status.HTTP_201_CREATED)
 @limiter.limit("5/minute")
-def signup(request: Request, data: LoginInput, session: Session = Depends(get_session)):
+def signup(request: Request, data: SignupInput, session: Session = Depends(get_session)):
     statement = select(User).where(User.user == data.user)
     if session.exec(statement).first():
         raise HTTPException(status_code=400, detail="User already exists")
@@ -32,13 +34,26 @@ def signup(request: Request, data: LoginInput, session: Session = Depends(get_se
 
     session.add(new_user)
     session.commit()
+    session.refresh(new_user)
 
-    return {"message": "User created successfully"}
+    refresh_token = create_refresh_token(data={"sub": str(new_user.id)})
+    access_token = create_access_token(data={"sub": str(new_user.id)})
+    response = JSONResponse(content={"access_token": access_token, "token_type": "bearer"})
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        samesite="lax",
+        secure=False,
+        path="/auth",
+        max_age=604800
+    )
+    return response
 
 
 @router.post("/login")
 def login(data: LoginInput, session: Session = Depends(get_session)):
-    statement = select(User).where(User.user == data.user)
+    statement = select(User).where(User.email == data.email)
     register = session.exec(statement).first()
 
     if not register:

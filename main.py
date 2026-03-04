@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from contextlib import asynccontextmanager
 from routers import auth, calc, monitor
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -14,7 +15,17 @@ from fastapi.responses import FileResponse
 
 load_dotenv()
 
-app = FastAPI()
+scheduler = BackgroundScheduler()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    create_db()
+    scheduler.add_job(check_sites, "interval", seconds=60)
+    scheduler.start()
+    yield
+    scheduler.shutdown()
+
+app = FastAPI(lifespan=lifespan)
 origins = os.getenv("ORIGINS").split(",")
 
 app.add_middleware(
@@ -25,19 +36,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-scheduler = BackgroundScheduler()
-@app.on_event("startup")
-def start_scheduler():
-    scheduler.add_job(check_sites, "interval", seconds=60)
-    scheduler.start()
-@app.on_event("shutdown")
-def shutdown_scheduler():    
-    scheduler.shutdown()
-
-create_db()
 app.include_router(auth.router)
 app.include_router(calc.router)
 app.include_router(monitor.router)
+@app.websocket("/ws/{token}")
+async def ws_route(websocket: WebSocket, token: str):
+    await websocket_endpoint(websocket, token)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
@@ -45,5 +49,6 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 async def serve_frontend():
     return FileResponse("frontend/dist/index.html")
 
-# Serve all static assets (JS, CSS, images)
 app.mount("/", StaticFiles(directory="frontend/dist"), name="static")
+
+

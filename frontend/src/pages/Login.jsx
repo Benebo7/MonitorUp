@@ -15,13 +15,16 @@ function Login({ onLogin }) {
     setLoading(true)
 
     const endpoint = isSignup ? '/auth/signup' : '/auth/login'
+    const body = isSignup
+      ? { user, email, password }
+      : { email, password }
 
     try {
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ user, email, password }),
+        body: JSON.stringify(body),
       })
 
       const data = await res.json()
@@ -31,16 +34,7 @@ function Login({ onLogin }) {
         return
       }
 
-      if (isSignup) {
-        setIsSignup(false)
-        setError('')
-        setUser('')
-        setEmail('')
-        setPassword('')
-        alert('Account created! You can now log in.')
-      } else {
-        onLogin(data.access_token)
-      }
+      onLogin(data.access_token)
     } catch (err) {
       setError('Connection failed')
     } finally {
@@ -55,13 +49,15 @@ function Login({ onLogin }) {
         <p className="subtitle">Uptime monitoring made simple</p>
 
         <form onSubmit={handleSubmit}>
-          <input
-            type="text"
-            placeholder="Username"
-            value={user}
-            onChange={(e) => setUser(e.target.value)}
-            required
-          />
+          {isSignup && (
+            <input
+              type="text"
+              placeholder="Username"
+              value={user}
+              onChange={(e) => setUser(e.target.value)}
+              required
+            />
+          )}
           <input
             type="email"
             placeholder="Email"
