@@ -1,0 +1,108 @@
+.monitor-card {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 10px;
+  padding: 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-left: 4px solid #334155;
+}
+
+.monitor-card.up {
+  border-left-color: #4ade80;
+}
+
+.monitor-card.down {
+  border-left-color: #f87171;
+}
+
+.monitor-card.pending {
+  border-left-color: #fbbf24;
+}
+
+.monitor-info {
+  flex: 1;
+}
+
+.monitor-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.monitor-header h3 {
+  font-size: 1.1rem;
+  color: #f1f5f9;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #334155;
+}
+
+.status-dot.up {
+  background: #4ade80;
+  box-shadow: 0 0 6px #4ade80;
+}
+
+.status-dot.down {
+  background: #f87171;
+  box-shadow: 0 0 6px #f87171;
+}
+
+.status-dot.pending {
+  background: #fbbf24;
+}
+
+.status-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+
+.status-badge.up {
+  background: rgba(74, 222, 128, 0.15);
+  color: #4ade80;
+}
+
+.status-badge.down {
+  background: rgba(248, 113, 113, 0.15);
+  color: #f87171;
+}
+
+.status-badge.pending {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+}
+
+.monitor-url {
+  color: #64748b;
+  font-size: 0.85rem;
+  margin-bottom: 0.25rem;
+}
+
+.monitor-meta {
+  color: #475569;
+  font-size: 0.8rem;
+}
+
+.btn-delete {
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  border: 1px solid #475569;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.btn-delete:hover {
+  border-color: #f87171;
+  color: #f87171;
+}

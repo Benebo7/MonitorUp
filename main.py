@@ -9,6 +9,9 @@ from database import create_db
 from fastapi.middleware.cors import CORSMiddleware
 from apscheduler.schedulers.background import BackgroundScheduler
 from Services.monitor import check_sites
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
 load_dotenv()
 
 app = FastAPI()
@@ -37,3 +40,10 @@ app.include_router(calc.router)
 app.include_router(monitor.router)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+@app.get("/")
+async def serve_frontend():
+    return FileResponse("frontend/dist/index.html")
+
+# Serve all static assets (JS, CSS, images)
+app.mount("/", StaticFiles(directory="frontend/dist"), name="static")
