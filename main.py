@@ -12,6 +12,8 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from Services.monitor import check_sites
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from fastapi import WebSocket
+from websocket import websocket_endpoint
 
 load_dotenv()
 

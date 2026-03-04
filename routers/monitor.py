@@ -5,7 +5,7 @@ from security import checkuser
 import httpx
 from database import get_session, Monitor
 from limiter import limiter
-
+from datetime import datetime
 router = APIRouter(prefix="/monitor", tags=["Monitor"])
 class MonitorInput(BaseModel):
     url: str
@@ -27,7 +27,7 @@ def create_monitor(request: Request, data: MonitorInput, id: str = Depends(check
         name=data.name,
         url=data.url,
         status_code=initial_status,
-        last_checked=datetime.utcnow().isoformat()
+        last_checked= datetime.utcnow().isoformat()
     )
     session.add(new_monitor)
     session.commit()

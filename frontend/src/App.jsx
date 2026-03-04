@@ -1,24 +1,28 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import './App.css'
 
 function App() {
-  const [token, setToken] = useState(localStorage.getItem('access_token'))
+  const [token, setToken] = useState(null)
+  const [loading, setLoading] = useState(true)
 
-  const handleLogin = (accessToken) => {
-    localStorage.setItem('access_token', accessToken)
-    setToken(accessToken)
-  }
+  useEffect(() => {
+    fetch('/auth/refresh', { method: 'POST', credentials: 'include' })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data?.access_token) setToken(data.access_token)
+      })
+      .finally(() => setLoading(false))
+  }, [])
 
-  const handleLogout = () => {
-    localStorage.removeItem('access_token')
-    setToken(null)
-  }
+  const handleLogin = (accessToken) => setToken(accessToken)
 
-  if (!token) {
-    return <Login onLogin={handleLogin} />
-  }
+  const handleLogout = () => setToken(null)
+
+  if (loading) return null
+
+  if (!token) return <Login onLogin={handleLogin} />
 
   return <Dashboard token={token} onLogout={handleLogout} />
 }

@@ -15,8 +15,8 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
     await websocket.accept()
     connections[int(user_id)] = websocket
 
-      try:
+    try:
         while True:
             await websocket.receive_text() 
-     except WebSocketDisconnect:
-        connections.pop(user_id, None)
+    except WebSocketDisconnect:
+         connections.pop(user_id, None)
