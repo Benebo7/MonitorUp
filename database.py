@@ -1,4 +1,5 @@
 from typing import Optional, Generator
+from uuid import UUID, uuid4
 from fastapi import HTTPException
 from sqlmodel import Field, Session, SQLModel, create_engine, select
 from security import get_password_hash, verify_password
@@ -15,7 +16,7 @@ class User(SQLModel, table=True):
     email: str = Field(unique=True)
 
 class Monitor(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: Optional[UUID] = Field(default_factory=uuid4, primary_key=True)
     user_id: int = Field(foreign_key="user.id")
     name: str
     url: str

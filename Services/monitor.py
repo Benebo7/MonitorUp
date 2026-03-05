@@ -1,12 +1,11 @@
 
-from database import get_session, Monitor
+from database import get_session, Monitor, User
 import httpx
 from datetime import datetime
-from fastapi import HTTPException
 from sqlmodel import update, select
 import asyncio
 from websocket import connections
-#from email_utils import send_email
+from email_utils import send_email
 
 def check_sites():
     session = next(get_session())   
@@ -20,34 +19,25 @@ def check_sites():
             m.last_checked = datetime.utcnow().isoformat()
             if m.user_id in connections:
                 ws = connections[m.user_id]
-                
                 try:
-                    asyncio.run(ws.send_json({"monitor_id": m.id, "status_code": new_status, "last_checked": m.last_checked}))
+                    asyncio.run(ws.send_json({"monitor_id": str(m.id), "status_code": new_status, "last_checked": m.last_checked}))
                 except:
-                    connections.pop(m.user_id, None) 
+                    connections.pop(m.user_id, None)
             
         except Exception as e:
             new_status = None  
         
         if m.status_code != new_status and m.status_code is not None:
-
             m.status_code = new_status
+            user = session.exec(select(User).where(User.id == m.user_id)).first()
+            if user:
+                try:
+                    send_email(m.url, new_status, user.email)
+                except:
+                    pass
 
-
-            
-            
-            #send_email(m.url, new_status)
-
-        
-        
-        session.execute(update(Monitor).where(Monitor.id == m.id).values(status_code=new_status, last_checked=m.last_checked))  
+        session.execute(update(Monitor).where(Monitor.id == m.id).values(status_code=new_status, last_checked=m.last_checked))
     session.commit()
-            
-    # 1. get all monitors from DB
-    # 2. fetch each URL
-    # 3. compare old status vs new status
-    # 4. if changed → update DB, send email
-    # 5. update last_checked
 
 
     

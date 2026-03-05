@@ -39,7 +39,7 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
-app.include_router(calc.router)
+
 app.include_router(monitor.router)
 @app.websocket("/ws/{token}")
 async def ws_route(websocket: WebSocket, token: str):

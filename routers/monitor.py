@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
+from uuid import UUID
 from sqlmodel import Session, select
 from security import checkuser
 import httpx
@@ -42,7 +43,7 @@ def read_monitors(request: Request, id: str = Depends(checkuser), session = Depe
 
 @router.delete("/delete/{monitor_id}")
 @limiter.limit("5/minute")
-def delete_monitor(request: Request, monitor_id: int, id: str = Depends(checkuser), session = Depends(get_session)):
+def delete_monitor(request: Request, monitor_id: UUID, id: str = Depends(checkuser), session = Depends(get_session)):
     monitor = session.exec(select(Monitor).where(Monitor.id == monitor_id)).first()
     if not monitor:
         raise HTTPException(status_code=404, detail="Monitor not found")
@@ -52,7 +53,7 @@ def delete_monitor(request: Request, monitor_id: int, id: str = Depends(checkuse
 
 @router.put("/update/{monitor_id}")
 @limiter.limit("5/minute")
-def update_monitor(request: Request, monitor_id: int, data: MonitorInput, id: str = Depends(checkuser), session = Depends(get_session)):
+def update_monitor(request: Request, monitor_id: UUID, data: MonitorInput, id: str = Depends(checkuser), session = Depends(get_session)):
     monitor = session.exec(select(Monitor).where(Monitor.id == monitor_id)).first()
     if not monitor:
         raise HTTPException(status_code=404, detail="Monitor not found")
