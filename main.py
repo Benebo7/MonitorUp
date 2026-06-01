@@ -1,12 +1,11 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
-from routers import auth, calc, monitor
+from routers import auth, monitor
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from limiter import limiter
 from dotenv import load_dotenv
 import os
-from database import create_db
 from fastapi.middleware.cors import CORSMiddleware
 from apscheduler.schedulers.background import BackgroundScheduler
 from Services.monitor import check_sites
@@ -21,7 +20,6 @@ scheduler = BackgroundScheduler()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    create_db()
     scheduler.add_job(check_sites, "interval", seconds=60)
     scheduler.start()
     yield

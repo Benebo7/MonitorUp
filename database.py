@@ -12,14 +12,14 @@ if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL is not set. Define it in your .env file.")
 
 class User(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: Optional[UUID] = Field(default_factory=uuid4, primary_key=True)
     user: str = Field(unique=True)
     password: str
     email: str = Field(unique=True)
 
 class Monitor(SQLModel, table=True):
     id: Optional[UUID] = Field(default_factory=uuid4, primary_key=True)
-    user_id: int = Field(foreign_key="user.id")
+    user_id: UUID = Field(foreign_key="user.id")
     name: str
     url: str
     status_code: int

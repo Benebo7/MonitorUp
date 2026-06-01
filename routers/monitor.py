@@ -6,7 +6,7 @@ from security import checkuser
 import httpx
 from database import get_session, Monitor
 from limiter import limiter
-from datetime import datetime
+from datetime import datetime, timezone
 router = APIRouter(prefix="/monitor", tags=["Monitor"])
 class MonitorInput(BaseModel):
     url: str
@@ -24,7 +24,7 @@ def create_monitor(request: Request, data: MonitorInput, id: str = Depends(check
         initial_status = 0
 
     new_monitor = Monitor(
-        user_id=int(id),
+        user_id=UUID(id),
         name=data.name,
         url=data.url,
         status_code=initial_status,
@@ -38,13 +38,13 @@ def create_monitor(request: Request, data: MonitorInput, id: str = Depends(check
 @router.get("/read")
 @limiter.limit("3/minute")
 def read_monitors(request: Request, id: str = Depends(checkuser), session = Depends(get_session)):
-    monitors = session.exec(select(Monitor).where(Monitor.user_id == int(id))).all()
+    monitors = session.exec(select(Monitor).where(Monitor.user_id == UUID(id))).all()
     return monitors
 
 @router.delete("/delete/{monitor_id}")
 @limiter.limit("5/minute")
 def delete_monitor(request: Request, monitor_id: UUID, id: str = Depends(checkuser), session = Depends(get_session)):
-    monitor = session.exec(select(Monitor).where(Monitor.id == monitor_id, Monitor.user_id == id)).first()
+    monitor = session.exec(select(Monitor).where(Monitor.id == monitor_id, Monitor.user_id == UUID(id))).first()
     if not monitor:
         raise HTTPException(status_code=404, detail="Monitor not found")
     session.delete(monitor)
@@ -54,7 +54,7 @@ def delete_monitor(request: Request, monitor_id: UUID, id: str = Depends(checkus
 @router.put("/update/{monitor_id}")
 @limiter.limit("5/minute")
 def update_monitor(request: Request, monitor_id: UUID, data: MonitorInput, id: str = Depends(checkuser), session = Depends(get_session)):
-    monitor = session.exec(select(Monitor).where(Monitor.id == monitor_id, Monitor.user_id == id)).first()
+    monitor = session.exec(select(Monitor).where(Monitor.id == monitor_id, Monitor.user_id == UUID(id))).first()
     if not monitor:
         raise HTTPException(status_code=404, detail="Monitor not found")
     monitor.name = data.name
