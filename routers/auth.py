@@ -43,8 +43,8 @@ def signup(request: Request, data: SignupInput, session: Session = Depends(get_s
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        samesite="lax",
-        secure=False,
+        samesite=True,
+        secure=True,
         path="/auth",
         max_age=604800
     )
@@ -69,8 +69,8 @@ def login(data: LoginInput, session: Session = Depends(get_session)):
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        samesite="lax",
-        secure=False,
+        samesite=True,
+        secure=True,
         path="/auth",
         max_age=604800
     )

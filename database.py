@@ -8,6 +8,8 @@ import os
 
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL is not set. Define it in your .env file.")
 
 class User(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -24,7 +26,7 @@ class Monitor(SQLModel, table=True):
     last_checked: Optional[str] = None
 
 
-engine = create_engine(DATABASE_URL, echo=True)
+engine = create_engine(DATABASE_URL, echo=False)
 
 def create_db():
     SQLModel.metadata.create_all(engine)

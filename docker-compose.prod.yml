@@ -4,9 +4,9 @@ services:
   api:
     image: ${DOCKER_IMAGE:-monitorup-api:latest}
     container_name: monitorup-api
-    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips=*
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     environment:
       - REDIS_URL=${REDIS_URL}
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database_psgrts:5432/${POSTGRES_DB}

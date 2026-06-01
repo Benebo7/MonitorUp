@@ -28,7 +28,7 @@ def create_monitor(request: Request, data: MonitorInput, id: str = Depends(check
         name=data.name,
         url=data.url,
         status_code=initial_status,
-        last_checked= datetime.utcnow().isoformat()
+        last_checked= datetime.now(timezone.utc).isoformat()
     )
     session.add(new_monitor)
     session.commit()
@@ -44,7 +44,7 @@ def read_monitors(request: Request, id: str = Depends(checkuser), session = Depe
 @router.delete("/delete/{monitor_id}")
 @limiter.limit("5/minute")
 def delete_monitor(request: Request, monitor_id: UUID, id: str = Depends(checkuser), session = Depends(get_session)):
-    monitor = session.exec(select(Monitor).where(Monitor.id == monitor_id)).first()
+    monitor = session.exec(select(Monitor).where(Monitor.id == monitor_id, Monitor.user_id == id)).first()
     if not monitor:
         raise HTTPException(status_code=404, detail="Monitor not found")
     session.delete(monitor)
@@ -54,7 +54,7 @@ def delete_monitor(request: Request, monitor_id: UUID, id: str = Depends(checkus
 @router.put("/update/{monitor_id}")
 @limiter.limit("5/minute")
 def update_monitor(request: Request, monitor_id: UUID, data: MonitorInput, id: str = Depends(checkuser), session = Depends(get_session)):
-    monitor = session.exec(select(Monitor).where(Monitor.id == monitor_id)).first()
+    monitor = session.exec(select(Monitor).where(Monitor.id == monitor_id, Monitor.user_id == id)).first()
     if not monitor:
         raise HTTPException(status_code=404, detail="Monitor not found")
     monitor.name = data.name
