@@ -9,6 +9,8 @@ services:
       - .:/app
     ports:
       - "8000:8000"
+    env_file:
+      - .env
     environment:
       - REDIS_URL=${REDIS_URL}
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database_psgrts:5432/${POSTGRES_DB}
@@ -33,6 +35,31 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
+  worker:
+    build: .
+    command: celery -A celery_app worker --loglevel=info
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=${REDIS_URL}
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database_psgrts:5432/${POSTGRES_DB}
+    depends_on:
+      - redis_cache
+      - database_psgrts
+
+  beat:
+    build: .
+    command: celery -A celery_app beat --loglevel=info
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=${REDIS_URL}
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database_psgrts:5432/${POSTGRES_DB}
+    depends_on:
+      - redis_cache
+      - database_psgrts
+
 
 volumes:
   postgres_data:

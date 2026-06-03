@@ -6,7 +6,8 @@ from sqlmodel import update, select
 import asyncio
 from websocket import connections
 from email_utils import send_email
-
+import celery_app
+@celery_app.task
 def check_sites():
     session = next(get_session())   
     

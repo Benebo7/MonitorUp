@@ -16,11 +16,11 @@ from websocket import websocket_endpoint
 
 load_dotenv()
 
-scheduler = BackgroundScheduler()
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    scheduler.add_job(check_sites, "interval", seconds=60)
+    
     scheduler.start()
     yield
     scheduler.shutdown()

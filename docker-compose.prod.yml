@@ -7,6 +7,8 @@ services:
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips=*
     ports:
       - "127.0.0.1:8000:8000"
+    env_file:
+      - .env
     environment:
       - REDIS_URL=${REDIS_URL}
       - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database_psgrts:5432/${POSTGRES_DB}
@@ -29,6 +31,30 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+  worker:
+    image: ${DOCKER_IMAGE:-monitorup-api:latest}
+    command: celery -A celery_app worker --loglevel=info
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=${REDIS_URL}
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database_psgrts:5432/${POSTGRES_DB}
+    depends_on:
+      - redis_cache
+      - database_psgrts
+    restart: unless-stopped
+  beat:
+    image: ${DOCKER_IMAGE:-monitorup-api:latest}
+    command: celery -A celery_app beat --loglevel=info
+    env_file:
+      - .env
+    environment:
+      - REDIS_URL=${REDIS_URL}
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@database_psgrts:5432/${POSTGRES_DB}
+    depends_on:
+      - redis_cache
+      - database_psgrts
     restart: unless-stopped
 
 volumes:
