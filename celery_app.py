@@ -9,8 +9,8 @@ celery_app = Celery("tasks", broker=REDIS_URL,backend=REDIS_URL, include=["Servi
 
 
 celery_app.conf.beat_schedule = {
-    "check-sites-every-minute": {
-        "task": "Services.monitor.check_sites",
+    "dispatch-checks-every-minute": {
+        "task": "Services.monitor.dispatch_checks",
         "schedule": 60.0,
     }
 }
