@@ -1,5 +1,6 @@
 from fastapi import WebSocket, WebSocketDisconnect
-import jwt, os
+import jwt, os, json
+import redis.asyncio as aioredis
 
 connections: dict[str, WebSocket] = {}
 
@@ -20,3 +21,19 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
             await websocket.receive_text()
     except WebSocketDisconnect:
          connections.pop(user_id, None)
+
+
+async def redis_subscriber():
+    r = aioredis.from_url(os.getenv("REDIS_URL"))
+    pubsub = r.pubsub()
+    await pubsub.subscribe("monitor_updates")
+    async for message in pubsub.listen():
+        if message["type"] != "message":
+            continue
+        data = json.loads(message["data"])
+        user_id = data.get("user_id")
+        if user_id in connections:
+            try:
+                await connections[user_id].send_json(data)
+            except Exception:
+                connections.pop(user_id, None)

@@ -7,12 +7,12 @@ from limiter import limiter
 from dotenv import load_dotenv
 import os
 from fastapi.middleware.cors import CORSMiddleware
-from apscheduler.schedulers.background import BackgroundScheduler
+import asyncio
 
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi import WebSocket
-from websocket import websocket_endpoint
+from websocket import websocket_endpoint, redis_subscriber
 
 load_dotenv()
 
@@ -21,9 +21,9 @@ load_dotenv()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     
-    scheduler.start()
+    subscriber = asyncio.create_task(redis_subscriber())
     yield
-    scheduler.shutdown()
+    subscriber.cancel()
 
 app = FastAPI(lifespan=lifespan)
 origins = os.getenv("ORIGINS").split(",")
