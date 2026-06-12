@@ -22,16 +22,7 @@ services:
     container_name: monitorup-redis
     restart: unless-stopped
 
-  database_psgrts:
-    image: postgres:15-alpine
-    container_name: monitorup-postgres
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
+
   worker:
     image: ${DOCKER_IMAGE:-monitorup-api:latest}
     command: celery -A celery_app worker --loglevel=info
