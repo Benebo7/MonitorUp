@@ -1,22 +1,32 @@
-# 1. Base: Começa com um Linux leve que já tem Python 3.10 instalado
+# ---- Stage 1: build do frontend (Vite/React) ----
+FROM node:20-slim AS frontend
+WORKDIR /frontend
+
+# Copia só os manifests primeiro (cache: só reinstala se as deps mudarem)
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+
+# Copia o resto do frontend e gera o build de produção em /frontend/dist
+COPY frontend/ ./
+RUN npm run build
+
+# ---- Stage 2: backend (FastAPI) ----
 FROM python:3.10-slim
 
-# 2. Configura variáveis de ambiente pra o Python não criar arquivos .pyc e logs aparecerem na hora
+# Python não cria .pyc e loga na hora
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# 3. Cria a pasta de trabalho dentro do container (como se fosse um mkdir)
 WORKDIR /app
 
-# 4. Copia SÓ o requirements.txt primeiro (Estratégia de Cache Inteligente)
-# Se você mudar seu código, mas não mudar as libs, o Docker não precisa reinstalar tudo.
+# Cache das deps Python: só reinstala se requirements.txt mudar
 COPY requirements.txt .
-
-# 5. Instala as dependências
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 6. Copia o resto do seu código para dentro da pasta /app
+# Copia o código do backend
 COPY . .
 
-# 7. Comando para iniciar sua API quando o container nascer
+# Traz o dist já buildado do stage do frontend
+COPY --from=frontend /frontend/dist ./frontend/dist
+
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
