@@ -16,3 +16,4 @@ httpx
 websockets
 celery
 pytest
+httpx_mock
