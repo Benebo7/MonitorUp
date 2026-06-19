@@ -14,8 +14,9 @@ def test_monitor_create(client, session, httpx_mock):
         "Authorization": f"Bearer {access_token}"
     })
     print(response.json())
-    Us = session.exec(select(User).where(User.email == "testuser@example.com")).first()
-    monitor = session.exec(select(Monitor).where(Monitor.user_id == Us.id)).first()
+    #Us = session.exec(select(User).where(User.email == "testuser@example.com")).first()
+    #monitor = session.exec(select(Monitor).where(Monitor.user_id == Us.id)).first()
+    monitor = session.exec(select(Monitor).join(User).where(User.email == "testuser@example.com")).first()
     assert monitor is not None
     assert monitor.name == "Google"
     assert monitor.url == "https://www.google.com"
@@ -33,8 +34,7 @@ def test_monitor_create_invalid_url(client, session, httpx_mock):
     }, headers={
         "Authorization": f"Bearer {access_token}"
     })
-    Us = session.exec(select(User).where(User.email == "testuser@example.com")).first()
-    monitor = session.exec(select(Monitor).where(Monitor.user_id == Us.id)).first()
+    monitor = session.exec(select(Monitor).join(User).where(User.email == "testuser@example.com")).first()
     assert monitor is not None
     assert monitor.status_code == 500
 
@@ -60,8 +60,7 @@ def test_monitor_update(client, session, httpx_mock):
     }, headers={
         "Authorization": f"Bearer {access_token}"
     })
-    Us = session.exec(select(User).where(User.email == "testuser@example.com")).first()
-    monitor = session.exec(select(Monitor).where(Monitor.user_id == Us.id)).first()
+    monitor = session.exec(select(Monitor).join(User).where(User.id == Monitor.user_id)).first()
     print(resp.json())
     if monitor:
         session.refresh(monitor)
@@ -85,7 +84,6 @@ def test_monitor_delete(client, session, httpx_mock):
     client.delete(f"/monitor/delete/{moni.id}", headers={
         "Authorization": f"Bearer {access_token}"
     })
-    Us = session.exec(select(User).where(User.email == "testuser@example.com")).first()
-    monitor = session.exec(select(Monitor).where(Monitor.user_id == Us.id)).first()
+    monitor = session.exec(select(Monitor).join(User).where(User.email == "testuser@example.com")).first()
     assert monitor is None
 
