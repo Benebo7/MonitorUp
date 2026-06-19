@@ -7,6 +7,7 @@ from fastapi import Cookie
 from security import create_access_token, create_refresh_token, verify_password, get_password_hash, SECRET_KEY, ALGORITHM
 import jwt
 
+
 from database import get_session, User
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -22,10 +23,9 @@ class LoginInput(BaseModel):
 @router.post("/signup", status_code=status.HTTP_201_CREATED)
 @limiter.limit("5/minute")
 def signup(request: Request, data: SignupInput, session: Session = Depends(get_session)):
-    statement = select(User).where(User.user == data.user)
+    statement = select(User).where(User.email == data.email)
     if session.exec(statement).first():
-        raise HTTPException(status_code=400, detail="User already exists")
-
+        raise HTTPException(status_code=400, detail="An account with this email already exists")
     new_user = User(
         user=data.user,
         email=data.email,
@@ -50,17 +50,19 @@ def signup(request: Request, data: SignupInput, session: Session = Depends(get_s
     )
     return response
 
-
 @router.post("/login")
 def login(data: LoginInput, session: Session = Depends(get_session)):
+    dummy = "$2b$12$LcY8WID9uI856Yg9D6A0O.M7fXpZ6vA9uT9eR9wQ9bC9aX9zY9wQu"
+
     statement = select(User).where(User.email == data.email)
     register = session.exec(statement).first()
 
     if not register:
-        raise HTTPException(status_code=400, detail="Invalid user or password")
+        verify_password(data.password, dummy)
+        raise HTTPException(status_code=401, detail="Invalid email or password")
 
     if not verify_password(data.password, register.password):
-        raise HTTPException(status_code=401, detail="Invalid user or password")
+        raise HTTPException(status_code=401, detail="Invalid email or password")
 
     refresh_token = create_refresh_token(data={"sub": str(register.id)})
     access_token = create_access_token(data={"sub": str(register.id)})

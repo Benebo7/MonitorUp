@@ -13,7 +13,7 @@ if not DATABASE_URL:
 
 class User(SQLModel, table=True):
     id: Optional[UUID] = Field(default_factory=uuid4, primary_key=True)
-    user: str = Field(unique=True)
+    user: str 
     password: str
     email: str = Field(unique=True)
 
