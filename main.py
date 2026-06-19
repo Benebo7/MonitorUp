@@ -13,7 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi import WebSocket
 from websocket import websocket_endpoint, redis_subscriber
-
+from pathlib import Path
 load_dotenv()
 
 
@@ -49,6 +49,6 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 async def serve_frontend():
     return FileResponse("frontend/dist/index.html")
 
-app.mount("/", StaticFiles(directory="frontend/dist"), name="static")
-
+if Path("frontend/dist").exists():
+    app.mount("/", StaticFiles(directory="frontend/dist"), name="static")
 
