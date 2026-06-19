@@ -18,11 +18,14 @@ jobs:
 
   deployment:
     needs: tests
-    if: ${{ secrets.DROPLET_SSH_KEY != '' }}
     runs-on: ubuntu-latest
     steps:
       - name: deployment
         run: |
+          if [ -z "${{ secrets.DROPLET_SSH_KEY }}" ]; then
+            echo "DROPLET_SSH_KEY is not configured. Skipping deployment."
+            exit 0
+          fi
           printf '%s' "${{ secrets.DROPLET_SSH_KEY }}" | tr -d '\r' > chave_temp
           chmod 600 chave_temp
           ssh -o StrictHostKeyChecking=no -i chave_temp root@159.223.140.235 "cd ~/MonitorUp && git pull && docker build -t monitorup-api:latest . && docker compose -f docker-compose.prod.yml run --rm api alembic upgrade head && docker compose -f docker-compose.prod.yml up -d"
