@@ -20,8 +20,11 @@ jobs:
     needs: tests
     runs-on: ubuntu-latest
     steps:
-      - name: deployment
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.DROPLET_SSH_KEY }}
+      
+      - name: Deploy
         run: |
-          echo "${{ secrets.DROPLET_SSH_KEY }}" > chave_temp
-          chmod 600 chave_temp
-          ssh -o StrictHostKeyChecking=no -i chave_temp root@159.223.140.235 "cd ~/MonitorUp && git pull && docker build -t monitorup-api:latest . && docker compose -f docker-compose.prod.yml run --rm api alembic upgrade head && docker compose -f docker-compose.prod.yml up -d"
+          ssh -o StrictHostKeyChecking=no root@159.223.140.235 "cd ~/MonitorUp && git pull && docker build -t monitorup-api:latest . && docker compose -f docker-compose.prod.yml run --rm api alembic upgrade head && docker compose -f docker-compose.prod.yml up -d"
