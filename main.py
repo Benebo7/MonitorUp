@@ -14,13 +14,14 @@ from fastapi.responses import FileResponse
 from fastapi import WebSocket
 from websocket import websocket_endpoint, redis_subscriber
 from pathlib import Path
+from database import create_db
 load_dotenv()
 
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    
+    create_db()
     subscriber = asyncio.create_task(redis_subscriber())
     yield
     subscriber.cancel()

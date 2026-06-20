@@ -3,7 +3,7 @@ from database import User, Monitor
 from tests.signup_helper import signup_helper
 from fastapi.security import HTTPAuthorizationCredentials
 from security import checkuser
-def test_monitor_create(client, session, httpx_mock):
+def test_monitor_create_read(client, session, httpx_mock):
     httpx_mock.add_response(url="https://www.google.com", status_code=200)
     status_code, response_json, response_cookies = signup_helper(client, session, "testuser", "testuser@example.com")
     access_token = response_json["access_token"]
@@ -21,6 +21,16 @@ def test_monitor_create(client, session, httpx_mock):
     assert monitor.name == "Google"
     assert monitor.url == "https://www.google.com"
     assert monitor.status_code == 200
+    readresp = client.get("/monitor/read", headers={
+        "Authorization": f"Bearer {access_token}"
+    })
+    assert readresp is not None
+    monitors = readresp.json()
+    monitor = monitors[0]
+    assert monitor is not None
+    assert monitor['url'] == 'https://www.google.com'
+    assert monitor['name'] == 'Google'
+    assert monitor['status_code'] == 200
 
 
 

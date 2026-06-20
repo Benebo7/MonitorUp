@@ -42,7 +42,7 @@ def create_monitor(request: Request, data: MonitorInput, id: str = Depends(check
 @limiter.limit("3/minute")
 def read_monitors(request: Request, id: str = Depends(checkuser), session = Depends(get_session)):
     monitors = session.exec(select(Monitor).where(Monitor.user_id == UUID(id))).all()
-    session.refresh(monitors)
+    
     return monitors
 
 @router.delete("/delete/{monitor_id}")
