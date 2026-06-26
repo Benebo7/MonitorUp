@@ -50,6 +50,12 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 async def serve_frontend():
     return FileResponse("frontend/dist/index.html")
 
+# SPA fallback: the email link points at /verify, which is a frontend route.
+# Serve index.html here so React boots and the Verify page reads ?token=.
+@app.get("/verify")
+async def serve_verify():
+    return FileResponse("frontend/dist/index.html")
+
 if Path("frontend/dist").exists():
     app.mount("/", StaticFiles(directory="frontend/dist"), name="static")
 

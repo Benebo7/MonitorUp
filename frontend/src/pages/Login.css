@@ -84,3 +84,33 @@
 .toggle:hover {
   text-decoration: underline;
 }
+
+.check-email {
+  text-align: center;
+}
+
+.check-email .subtitle {
+  margin-bottom: 1rem;
+}
+
+.check-email strong {
+  color: #e2e8f0;
+}
+
+.check-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 1.5rem;
+  border-radius: 50%;
+  background: rgba(56, 189, 248, 0.12);
+  color: #38bdf8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+}
+
+.hint {
+  color: #64748b;
+  font-size: 0.8rem;
+}

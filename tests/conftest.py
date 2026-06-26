@@ -2,7 +2,7 @@ import os
 os.environ.setdefault("DATABASE_URL", "sqlite://")
 os.environ.setdefault("SECRET_KEY", "test-secret-key")
 os.environ.setdefault("ALGORITHM", "HS256")
-os.environ.setdefault("REDIS_URL", "memory://")
+os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
 os.environ.setdefault("ORIGINS", "http://localhost")
 
 import pytest
@@ -28,8 +28,13 @@ def get_session_test():
 @pytest.fixture(autouse=True)
 def fresh_db():
     SQLModel.metadata.create_all(test_engine)
-    yield 
+    yield
     SQLModel.metadata.drop_all(test_engine)
+
+@pytest.fixture(autouse=True)
+def stub_email_task(monkeypatch):
+    
+    monkeypatch.setattr("email_utils.send_verification_email.delay", lambda *a, **k: None)
 
 @pytest.fixture
 def client():

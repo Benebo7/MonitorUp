@@ -16,10 +16,11 @@ class User(SQLModel, table=True):
     user: str 
     password: str
     email: str = Field(unique=True)
+    is_verified: bool = Field(default=False)
 
 class Monitor(SQLModel, table=True):
     id: Optional[UUID] = Field(default_factory=uuid4, primary_key=True)
-    user_id: UUID = Field(foreign_key="user.id")
+    user_id: UUID = Field(foreign_key="user.id",index=True)
     name: str
     url: str
     status_code: int
