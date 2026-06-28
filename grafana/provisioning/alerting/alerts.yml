@@ -1,0 +1,175 @@
+apiVersion: 1
+
+# ---------------------------------------------------------------------------
+# ALERT RULES
+# ---------------------------------------------------------------------------
+groups:
+  - orgId: 1
+    name: MonitorUp
+    folder: MonitorUp
+    interval: 1m
+    rules:
+      # --- CPU > 85% por 5min ---
+      - uid: cpu_high
+        title: CPU above 85%
+        condition: C
+        for: 5m
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: warning
+        annotations:
+          summary: "CPU usage above 85% for 5 minutes"
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: 100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+              instant: true
+              range: false
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: C
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              refId: C
+              conditions:
+                - type: query
+                  evaluator:
+                    type: gt
+                    params: [85]
+                  operator:
+                    type: and
+                  query:
+                    params: []
+                  reducer:
+                    type: last
+                    params: []
+
+      # --- RAM > 85% por 5min ---
+      - uid: ram_high
+        title: RAM above 85%
+        condition: C
+        for: 5m
+        noDataState: OK
+        execErrState: Error
+        labels:
+          severity: warning
+        annotations:
+          summary: "RAM usage above 85% for 5 minutes"
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100
+              instant: true
+              range: false
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: C
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              refId: C
+              conditions:
+                - type: query
+                  evaluator:
+                    type: gt
+                    params: [85]
+                  operator:
+                    type: and
+                  query:
+                    params: []
+                  reducer:
+                    type: last
+                    params: []
+
+      # --- Taxa de erro 5xx > 5% por 5min ---
+      - uid: error_rate_high
+        title: Error rate 5xx above 5%
+        condition: C
+        for: 5m
+        noDataState: OK
+        execErrState: OK
+        labels:
+          severity: critical
+        annotations:
+          summary: "5xx error rate above 5% for 5 minutes"
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 600
+              to: 0
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: sum(rate(http_requests_total{status=~"5..",handler!="/metrics"}[5m])) / sum(rate(http_requests_total{handler!="/metrics"}[5m])) * 100
+              instant: true
+              range: false
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+          - refId: C
+            relativeTimeRange:
+              from: 0
+              to: 0
+            datasourceUid: __expr__
+            model:
+              type: threshold
+              expression: A
+              refId: C
+              conditions:
+                - type: query
+                  evaluator:
+                    type: gt
+                    params: [5]
+                  operator:
+                    type: and
+                  query:
+                    params: []
+                  reducer:
+                    type: last
+                    params: []
+
+# ---------------------------------------------------------------------------
+# CONTACT POINTS  (URL do webhook vem do .env via $__env{}, nunca hardcoded)
+# ---------------------------------------------------------------------------
+contactPoints:
+  - orgId: 1
+    name: discord
+    receivers:
+      - uid: discord_main
+        type: discord
+        disableResolveMessage: false
+        settings:
+          url: $__env{DISCORD_WEBHOOK_URL}
+
+# ---------------------------------------------------------------------------
+# NOTIFICATION POLICY  (raiz: manda tudo pro discord)
+# ---------------------------------------------------------------------------
+policies:
+  - orgId: 1
+    receiver: discord
+    group_by: ["grafana_folder", "alertname"]
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h

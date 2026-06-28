@@ -18,6 +18,60 @@ services:
     container_name: monitorup-redis
     restart: unless-stopped
 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: monitorup-prometheus
+    volumes:
+     - ./prometheus.yml:/etc/prometheus/prometheus.yml
+     - prometheus_data:/prometheus
+    command:
+     - '--config.file=/etc/prometheus/prometheus.yml'
+     - '--storage.tsdb.path=/prometheus'
+     - '--storage.tsdb.retention.time=7d'
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: monitorup-grafana
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "127.0.0.1:3001:3000" 
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_ADMIN_PASSWORD:-admin}
+      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL:-}
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: monitorup-cadvisor
+    ports:
+      - "8081:8080"          # UI do cadvisor (opcional, só pra você olhar)
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    privileged: true
+    devices:
+      - /dev/kmsg
+
+  node_exporter:
+    image: prom/node-exporter:latest
+    container_name: monitorup-node-exporter
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+
+
+
   worker:
     image: ${DOCKER_IMAGE:-monitorup-api:latest}
     command: celery -A celery_app worker --loglevel=info
@@ -35,3 +89,7 @@ services:
     depends_on:
       - redis_cache
     restart: unless-stopped
+
+volumes:
+  grafana_data:
+  prometheus_data:

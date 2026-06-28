@@ -17,3 +17,4 @@ websockets
 celery
 pytest
 pytest-httpx
+prometheus-fastapi-instrumentator

@@ -50,7 +50,8 @@ def signup(request: Request, data: SignupInput, session: Session = Depends(get_s
     return {"message": "User created successfully"}
 
 @router.post("/login")
-def login(data: LoginInput, session: Session = Depends(get_session)):
+@limiter.limit("5/minute")
+def login(request: Request, data: LoginInput, session: Session = Depends(get_session)):
     dummy = "$2b$12$LcY8WID9uI856Yg9D6A0O.M7fXpZ6vA9uT9eR9wQ9bC9aX9zY9wQu"
 
     statement = select(User).where(User.email == data.email)

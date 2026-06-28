@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 import os
 from fastapi.middleware.cors import CORSMiddleware
 import asyncio
-
+from prometheus_fastapi_instrumentator import Instrumentator
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi import WebSocket
@@ -16,7 +16,6 @@ from websocket import websocket_endpoint, redis_subscriber
 from pathlib import Path
 from database import create_db
 load_dotenv()
-
 
 
 @asynccontextmanager
@@ -38,8 +37,9 @@ app.add_middleware(
 )
 
 app.include_router(auth.router)
-
 app.include_router(monitor.router)
+Instrumentator().instrument(app).expose(app)
+
 @app.websocket("/ws/{token}")
 async def ws_route(websocket: WebSocket, token: str):
     await websocket_endpoint(websocket, token)

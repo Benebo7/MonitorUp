@@ -1,0 +1,16 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'monitorup-api'
+    static_configs:
+      - targets: ['api:8000']
+
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']      # porta INTERNA (8080), não a 8081 do host
+
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node_exporter:9100']
+
