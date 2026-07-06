@@ -27,4 +27,4 @@ jobs:
       
       - name: Deploy
         run: |
-          ssh -o StrictHostKeyChecking=no root@159.223.140.235 "cd ~/MonitorUp && git pull && docker build -t monitorup-api:latest . && docker compose -f docker-compose.prod.yml run --rm api alembic upgrade head && docker compose -f docker-compose.prod.yml up -d"
+          ssh -o StrictHostKeyChecking=no azureuser@158.23.16.113 "cd ~/MonitorUp && git pull && docker build -t monitorup-api:latest . && docker compose -f docker-compose.prod.yml run --rm api alembic upgrade head && docker compose -f docker-compose.prod.yml up -d"
