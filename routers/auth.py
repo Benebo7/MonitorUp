@@ -10,15 +10,16 @@ from sqlalchemy.exc import IntegrityError
 from email_utils import send_verification_email
 from database import get_session, User
 from uuid import UUID
+from pydantic import EmailStr as Emailstr
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 class SignupInput(BaseModel):
     user: str
-    email: str
+    email: Emailstr
     password: str
 class LoginInput(BaseModel):
-    email: str
+    email: Emailstr
     password: str
 
 @router.post("/signup", status_code=status.HTTP_201_CREATED)
