@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   api:
-    image: ${DOCKER_IMAGE:-ghcr.io/benebo7/monitorup-api:latest}
+    image: ${DOCKER_IMAGE:-benebo7/monitorup-api:latest}
     container_name: monitorup-api
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips=*
     ports:
@@ -19,7 +19,7 @@ services:
     restart: unless-stopped
 
   worker:
-    image: ${DOCKER_IMAGE:-ghcr.io/benebo7/monitorup-api:latest}
+    image: ${DOCKER_IMAGE:-benebo7/monitorup-api:latest}
     command: celery -A celery_app worker --loglevel=info
     env_file:
       - .env
@@ -28,7 +28,7 @@ services:
     restart: unless-stopped
 
   beat:
-    image: ${DOCKER_IMAGE:-ghcr.io/benebo7/monitorup-api:latest}
+    image: ${DOCKER_IMAGE:-benebo7/monitorup-api:latest}
     command: celery -A celery_app beat --loglevel=info
     env_file:
       - .env
