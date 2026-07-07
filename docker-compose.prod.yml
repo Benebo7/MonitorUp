@@ -20,7 +20,7 @@ services:
 
   worker:
     image: ${DOCKER_IMAGE:-benebo7/monitorup-api:latest}
-    command: celery -A celery_app worker --loglevel=info
+    command: celery -A celery_app worker --loglevel=info --concurrency=1
     env_file:
       - .env
     depends_on:
