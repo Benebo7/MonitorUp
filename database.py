@@ -1,7 +1,8 @@
 from typing import Optional, Generator
 from uuid import UUID, uuid4
 from fastapi import HTTPException
-from sqlmodel import Field, Session, SQLModel, create_engine, select
+from sqlmodel import Field, Session, SQLModel, create_engine, select, Relationship
+
 from security import get_password_hash, verify_password
 from dotenv import load_dotenv
 import os
@@ -17,6 +18,7 @@ class User(SQLModel, table=True):
     password: str
     email: str = Field(unique=True)
     is_verified: bool = Field(default=False)
+    monitors: list["Monitor"] = Relationship(back_populates="user")
 
 class Monitor(SQLModel, table=True):
     id: Optional[UUID] = Field(default_factory=uuid4, primary_key=True)
@@ -25,6 +27,7 @@ class Monitor(SQLModel, table=True):
     url: str
     status_code: int
     last_checked: Optional[str] = None
+    user: list["User"] = Relationship(back_populates="monitors")
 
 
 engine = create_engine(DATABASE_URL, echo=False)

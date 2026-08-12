@@ -11,7 +11,7 @@ load_dotenv()
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
-
+ADMIN_KEY = os.getenv("ADMIN_KEY")
 
 def create_access_token(data: dict) -> str:
     to_encode = data.copy()
@@ -57,3 +57,11 @@ def checkuser(creds: HTTPAuthorizationCredentials = Depends(security)):
         return id
     except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="Expired or invalid token")
+
+def checkadmin(admin_token: str):
+    if not admin_token:
+        raise HTTPException(status_code=401, detail="Admin token required")
+    if admin_token != ADMIN_KEY:
+        raise HTTPException(status_code=403, detail="Invalid admin token")
+    return True
+    

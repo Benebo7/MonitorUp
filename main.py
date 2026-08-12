@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
-from routers import auth, monitor
+from routers import auth, monitor, admin
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from limiter import limiter
@@ -38,6 +38,7 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(monitor.router)
+app.include_router(admin.router)
 Instrumentator().instrument(app).expose(app)
 
 @app.websocket("/ws/{token}")
@@ -54,6 +55,12 @@ async def serve_frontend():
 # Serve index.html here so React boots and the Verify page reads ?token=.
 @app.get("/verify")
 async def serve_verify():
+    return FileResponse("frontend/dist/index.html")
+
+# SPA fallback: /admin is the frontend's admin panel route, not an API route
+# (the admin router only defines /admin/verify, /admin/users, /admin/monitors).
+@app.get("/admin")
+async def serve_admin():
     return FileResponse("frontend/dist/index.html")
 
 if Path("frontend/dist").exists():
