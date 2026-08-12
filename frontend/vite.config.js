@@ -8,6 +8,7 @@ export default defineConfig({
     proxy: {
       '/auth': 'http://localhost:8000',
       '/monitor': 'http://localhost:8000',
+      '/admin': 'http://localhost:8000',
       '/ws': {
         target: 'ws://localhost:8000',
         ws: true,

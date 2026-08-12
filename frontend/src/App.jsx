@@ -2,15 +2,17 @@ import { useState, useEffect } from 'react'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Verify from './pages/Verify'
+import AdminApp from './pages/admin/AdminApp'
 import './App.css'
 
 function App() {
   const [token, setToken] = useState(null)
   const [loading, setLoading] = useState(true)
   const isVerifyRoute = window.location.pathname === '/verify'
+  const isAdminRoute = window.location.pathname.startsWith('/admin')
 
   useEffect(() => {
-    if (isVerifyRoute) {
+    if (isVerifyRoute || isAdminRoute) {
       setLoading(false)
       return
     }
@@ -34,6 +36,10 @@ function App() {
   }
 
   if (loading) return null
+
+  if (isAdminRoute) {
+    return <AdminApp />
+  }
 
   if (isVerifyRoute) {
     return <Verify onVerified={(accessToken) => {
