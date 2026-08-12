@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from uuid import UUID
 from sqlmodel import Session, select
-from security import checkuser
+from security import checkuser, is_url_safe
 import httpx
 from database import get_session, Monitor
 from limiter import limiter
@@ -19,6 +19,8 @@ def create_monitor(request: Request, data: MonitorInput, id: str = Depends(check
     monitor_count = session.exec(select(Monitor).where(Monitor.user_id == UUID(id))).all()
     if len(monitor_count) >= 5:
         raise HTTPException(status_code=400, detail="You can only have 5 monitors")
+    if not is_url_safe(data.url):
+        raise HTTPException(status_code=400, detail="This URL is not allowed")
     try:
         response = httpx.get(data.url, timeout=10)
         initial_status = response.status_code
@@ -61,6 +63,8 @@ def update_monitor(request: Request, monitor_id: UUID, data: MonitorInput, id: s
     monitor = session.exec(select(Monitor).where(Monitor.id == monitor_id, Monitor.user_id == UUID(id))).first()
     if not monitor:
         raise HTTPException(status_code=404, detail="Monitor not found")
+    if not is_url_safe(data.url):
+        raise HTTPException(status_code=400, detail="This URL is not allowed")
     try:
         response = httpx.get(data.url, timeout=10)
         initial_status = response.status_code

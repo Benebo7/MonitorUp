@@ -8,6 +8,7 @@ import json
 import redis
 from email_utils import send_email
 from celery_app import celery_app
+from security import is_url_safe
 
 
 BATCH_SIZE = 50
@@ -29,6 +30,10 @@ def check_batch(monitor_ids):
             select(Monitor).where(Monitor.id.in_([UUID(i) for i in monitor_ids]))
         ).all()
         for m in monitors:
+            if not is_url_safe(m.url):
+                session.delete(m)
+                continue
+
             try:
                 response = httpx.get(m.url, timeout=10)
                 new_status = response.status_code

@@ -2,6 +2,9 @@ from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 import os
+import socket
+import ipaddress
+from urllib.parse import urlparse
 from passlib.context import CryptContext
 import jwt
 from datetime import datetime, timedelta
@@ -64,4 +67,23 @@ def checkadmin(admin_token: str):
     if admin_token != ADMIN_KEY:
         raise HTTPException(status_code=403, detail="Invalid admin token")
     return True
-    
+
+
+def is_url_safe(url: str) -> bool:
+    """Blocks SSRF: rejects URLs that resolve to private/internal/reserved IPs."""
+    parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https") or not parsed.hostname:
+        return False
+
+    try:
+        addr_info = socket.getaddrinfo(parsed.hostname, None)
+    except socket.gaierror:
+        return False
+
+    for *_, sockaddr in addr_info:
+        ip = ipaddress.ip_address(sockaddr[0])
+        if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved or ip.is_multicast:
+            return False
+
+    return True
+
