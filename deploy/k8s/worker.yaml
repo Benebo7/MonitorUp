@@ -16,8 +16,16 @@ spec:
         - name: worker
           image: monitorup:local
           imagePullPolicy: IfNotPresent
-          command: ["celery", "-A", "celery_app", "worker", "--loglevel=info"]
+          # --concurrency is explicit because Celery otherwise calls os.cpu_count(),
+          # which reports the host's core count and ignores cgroup limits.
+          command: ["celery", "-A", "celery_app", "worker", "--loglevel=info", "--concurrency=4"]
           envFrom:
             - secretRef:
                 name: monitorup-config
-          
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
