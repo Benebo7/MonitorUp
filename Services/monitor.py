@@ -9,7 +9,8 @@ import redis
 from email_utils import send_email
 from celery_app import celery_app
 from security import is_url_safe
-
+from sqlalchemy.orm import joinedload
+from classes.MoniUser import UserMonitors, MonitorUser
 
 BATCH_SIZE = 50
 redis_client = redis.from_url(os.getenv("REDIS_URL"))
@@ -27,17 +28,18 @@ def dispatch_checks():
 def check_batch(monitor_ids):
     with Session(engine) as session:
         monitors = session.exec(
-            select(Monitor).where(Monitor.id.in_([UUID(i) for i in monitor_ids]))
-        ).all()
+            select(Monitor)
+            .where(Monitor.id.in_([UUID(i) for i in monitor_ids])).options(joinedload(Monitor.user))).all()
         for m in monitors:
             if not is_url_safe(m.url):
                 session.delete(m)
                 continue
-
+            
+            m.last_checked = datetime.utcnow().isoformat()
             try:
                 response = httpx.get(m.url, timeout=10)
                 new_status = response.status_code
-                m.last_checked = datetime.utcnow().isoformat()
+                
                 redis_client.publish("monitor_updates", json.dumps({
                     "user_id": str(m.user_id),
                     "monitor_id": str(m.id),
@@ -49,12 +51,14 @@ def check_batch(monitor_ids):
 
             if m.status_code != new_status and m.status_code is not None:
                 m.status_code = new_status
-                user = session.exec(select(User).where(User.id == m.user_id)).first()
+                user = m.user
                 if user:
                     try:
                         send_email(m.url, new_status, user.email)
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        print(f"Error sending email: {e}")
+            
+            m.status_code = new_status
 
-            session.execute(update(Monitor).where(Monitor.id == m.id).values(status_code=new_status, last_checked=m.last_checked))
+            
         session.commit()
