@@ -23,7 +23,8 @@ class token(BaseModel):
 @limiter.limit("5/minute")
 def admin_auth(request: Request, token: token):
     
-    checkadmin(token.token)
+    if token.token != os.getenv("ADMIN_KEY"):
+        raise HTTPException(status_code=401, detail="Invalid admin token")
     response = JSONResponse(content={"message": "Admin access granted"})
     response.set_cookie(
     key="admin_token",
@@ -42,17 +43,14 @@ class PaginatedUsers(BaseModel):
     page_size: int
     total_users: int
 
-@router.get("/users", response_model=PaginatedUsers)
+@router.get("/users", response_model=PaginatedUsers, dependencies=[Depends(checkadmin)])
 @limiter.limit("5/minute")
-def get_users(request: Request, admin_token: str = Cookie(default=None), session: Session = Depends(get_session),
+def get_users(request: Request, session: Session = Depends(get_session),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(10, ge=1, le=100, description="Items per page"),
     is_verified: Optional[bool] = Query(None, description="Filter by verification status"),
     monitors_qtt: Optional[int] = Query(None, description="Filter by number of monitors")
-
     ):
-    checkadmin(admin_token)
-
     offset = (page - 1) * page_size
     limit = page_size
 
@@ -78,9 +76,9 @@ class PaginatedMonitors(BaseModel):
     page_size: int
     total_monitors: int
     
-@router.get("/monitors", response_model=PaginatedMonitors)
+@router.get("/monitors", response_model=PaginatedMonitors, dependencies=[Depends(checkadmin)])
 @limiter.limit("5/minute")
-def get_monitors(request: Request, admin_token: str = Cookie(default=None), session: Session = Depends(get_session),
+def get_monitors(request: Request, session: Session = Depends(get_session),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(10, ge=1, le=100, description="Items per page"),
     statuscode: Optional[int] = Query(None, description="Filter by status code"),
@@ -89,7 +87,6 @@ def get_monitors(request: Request, admin_token: str = Cookie(default=None), sess
     ):
     offset = (page - 1) * page_size
     limit = page_size
-    checkadmin(admin_token)
 
     stmt = select(Monitor)
     stmt_count = select(func.count()).select_from(Monitor)

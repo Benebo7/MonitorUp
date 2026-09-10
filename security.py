@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 from passlib.context import CryptContext
 import jwt
 from datetime import datetime, timedelta
+from fastapi import Cookie
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 load_dotenv()
@@ -61,7 +62,7 @@ def checkuser(creds: HTTPAuthorizationCredentials = Depends(security)):
     except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="Expired or invalid token")
 
-def checkadmin(admin_token: str):
+def checkadmin(admin_token: str = Cookie(default=None)):
     if not admin_token:
         raise HTTPException(status_code=401, detail="Admin token required")
     if admin_token != ADMIN_KEY:
