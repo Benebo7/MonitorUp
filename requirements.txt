@@ -18,3 +18,4 @@ celery
 pytest
 pytest-httpx
 prometheus-fastapi-instrumentator
+python-json-logger

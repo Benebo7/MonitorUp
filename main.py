@@ -1,11 +1,13 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from contextlib import asynccontextmanager
 from routers import auth, monitor, admin
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from limiter import limiter
 from dotenv import load_dotenv
+from uuid import uuid4
 import os
+from datetime import datetime, timezone
 from fastapi.middleware.cors import CORSMiddleware
 import asyncio
 from prometheus_fastapi_instrumentator import Instrumentator
@@ -15,8 +17,8 @@ from fastapi import WebSocket
 from websocket import websocket_endpoint, redis_subscriber
 from pathlib import Path
 from database import create_db
+from logger import logger
 load_dotenv()
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -36,6 +38,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start_time = datetime.now()
+    request_id = str(uuid4())
+
+    response = await call_next(request)
+    process_time = (datetime.now() - start_time).total_seconds() * 1000
+    logger.info(
+        f"{request.method} {request.url.path} completed_in={process_time:.2f}ms status_code={response.status_code} request_id={request_id}"
+    )
+    return response
+
 app.include_router(auth.router)
 app.include_router(monitor.router)
 app.include_router(admin.router)
@@ -45,9 +59,10 @@ Instrumentator().instrument(app).expose(app)
 async def ws_route(websocket: WebSocket, token: str):
     await websocket_endpoint(websocket, token)
 app.state.limiter = limiter
+
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-@app.get("/")
+@app.get("/") 
 async def serve_frontend():
     return FileResponse("frontend/dist/index.html")
 
