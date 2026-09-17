@@ -1,6 +1,7 @@
 from fastapi import WebSocket, WebSocketDisconnect
 import jwt, os, json
 import redis.asyncio as aioredis
+from core.logger import logger
 
 connections: dict[str, WebSocket] = {}
 
@@ -35,5 +36,6 @@ async def redis_subscriber():
         if user_id in connections:
             try:
                 await connections[user_id].send_json(data)
-            except Exception:
+            except Exception as e:
+                logger.error(f"Error sending websocket update to {user_id}: {e}")
                 connections.pop(user_id, None)

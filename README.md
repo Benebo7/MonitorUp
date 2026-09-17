@@ -78,24 +78,33 @@ new line
 ```
 .
 ├── main.py                  # FastAPI app + lifespan (WebSocket subscriber)
-├── database.py              # SQLModel models (User, Monitor) + engine/session
-├── security.py              # password hashing, JWT, auth dependency
-├── limiter.py               # slowapi rate limiter
-├── websocket.py             # WS endpoint + Redis Pub/Sub subscriber
-├── celery_app.py            # Celery app + beat schedule
-├── email_utils.py           # email alerts
-├── routers/
-│   ├── auth.py              # signup / login / refresh
-│   └── monitor.py           # monitor CRUD
-├── Services/
-│   └── monitor.py           # Celery tasks: dispatch_checks, check_batch
-├── migrations/              # Alembic migrations
-├── frontend/                # React + Vite app (built into static assets)
-├── tests/                   # pytest suite (TestClient + SQLite)
-├── deploy/                  # nginx config + k8s manifests
-├── Dockerfile               # multi-stage: builds frontend, serves via FastAPI
-├── docker-compose.prod.yml  # api + worker + beat + redis
-└── .github/workflows/ci.yml # CI/CD pipeline
+├── models.py                 # SQLModel tables (User, Monitor)
+├── schemas.py                 # Pydantic response schemas
+├── core/
+│   ├── database.py            # engine, get_session, create_db
+│   ├── security.py             # password hashing, JWT, auth dependencies
+│   ├── limiter.py               # slowapi rate limiter
+│   └── logger.py                 # structured JSON logger
+├── websocket.py              # WS endpoint + Redis Pub/Sub subscriber
+├── celery_app.py             # Celery app + beat schedule (process entrypoint)
+├── email_utils.py            # email alerts
+├── routers/                  # controllers: parse request, call service, shape response
+│   ├── auth.py                # signup / login / refresh
+│   ├── admin.py                # paginated user/monitor listing
+│   └── monitor.py               # monitor CRUD
+├── services/                 # business rules, DB queries
+│   ├── auth_service.py
+│   ├── admin_service.py
+│   └── monitor_service.py
+├── workers/
+│   └── tasks.py               # Celery tasks: dispatch_checks, check_batch
+├── migrations/               # Alembic migrations
+├── frontend/                 # React + Vite app (built into static assets)
+├── tests/                    # pytest suite (TestClient + SQLite)
+├── deploy/                   # nginx config + k8s manifests
+├── Dockerfile                # multi-stage: builds frontend, serves via FastAPI
+├── docker-compose.prod.yml   # api + worker + beat + redis
+└── .github/workflows/ci.yml  # CI/CD pipeline
 ```
 
 ---

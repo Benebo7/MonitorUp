@@ -1,6 +1,6 @@
 from sqlmodel import select
-from database import User
-from security import create_verify_token
+from models import User
+from core.security import create_verify_token
 
 def signup_helper(client, session, user: str, email: str):
     response_signup = client.post("/auth/signup", json={

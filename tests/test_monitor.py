@@ -1,8 +1,8 @@
 from sqlmodel import select
-from database import User, Monitor
+from models import User, Monitor
 from tests.signup_helper import signup_helper
 from fastapi.security import HTTPAuthorizationCredentials
-from security import checkuser
+from core.security import checkuser
 def test_monitor_create_read(client, session, httpx_mock):
     httpx_mock.add_response(url="https://www.google.com", status_code=200)
     status_code, response_json, response_cookies = signup_helper(client, session, "testuser", "testuser@example.com")

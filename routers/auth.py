@@ -1,16 +1,15 @@
 from fastapi import APIRouter, HTTPException, Depends, status, Request
 from pydantic import BaseModel
-from sqlmodel import Session, select
-from limiter import limiter
+from sqlmodel import Session
+from core.limiter import limiter
 from fastapi.responses import JSONResponse
 from fastapi import Cookie
-from security import create_access_token, create_refresh_token, verify_password,create_verify_token,get_password_hash, SECRET_KEY, ALGORITHM
+from core.security import create_access_token, create_refresh_token, verify_password, create_verify_token, get_password_hash, SECRET_KEY, ALGORITHM
 import jwt
 from sqlalchemy.exc import IntegrityError
-from email_utils import send_verification_email
-from database import get_session, User
-from uuid import UUID
+from core.database import get_session
 from pydantic import EmailStr as Emailstr
+from services import auth_service
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -25,57 +24,21 @@ class LoginInput(BaseModel):
 @router.post("/signup", status_code=status.HTTP_201_CREATED)
 @limiter.limit("5/minute")
 def signup(request: Request, data: SignupInput, session: Session = Depends(get_session)):
-   
-    new_user = User(
-        user=data.user,
-        email=data.email,
-        password=get_password_hash(data.password),
-        is_verified=False
-    )
-    verify_token = create_verify_token(data={"sub": str(new_user.id)} )
-    try:
-
-        session.add(new_user)
-        session.commit()
-        session.refresh(new_user)
-    
-    except IntegrityError:
-        session.rollback()
-        send_verification_email.delay(new_user.email, "user already exists")
-        return {"message": "User created successfully"}
-
-    send_verification_email.delay(new_user.email, verify_token)
-
-    
-
+    auth_service.signup(session, data.user, data.email, data.password)
     return {"message": "User created successfully"}
 
 @router.post("/login")
 @limiter.limit("5/minute")
 def login(request: Request, data: LoginInput, session: Session = Depends(get_session)):
-    dummy = "$2b$12$LcY8WID9uI856Yg9D6A0O.M7fXpZ6vA9uT9eR9wQ9bC9aX9zY9wQu"
-
-    statement = select(User).where(User.email == data.email)
-    register = session.exec(statement).first()
-
-    
-
-
-    if not register:
-        verify_password(data.password, dummy)
+    try:
+        user = auth_service.authenticate(session, data.email, data.password)
+    except auth_service.InvalidCredentials:
         raise HTTPException(status_code=401, detail="Invalid email or password")
-
-    if not verify_password(data.password, register.password):
-        raise HTTPException(status_code=401, detail="Invalid email or password")
-
-    if register.is_verified == False:
-        verify_token = create_verify_token(data={"sub": str(register.id)})
-        send_verification_email.delay(register.email, verify_token)
+    except auth_service.EmailNotVerified:
         raise HTTPException(status_code=401, detail="Email not verified")
-        
 
-    refresh_token = create_refresh_token(data={"sub": str(register.id)})
-    access_token = create_access_token(data={"sub": str(register.id)})
+    refresh_token = create_refresh_token(data={"sub": str(user.id)})
+    access_token = create_access_token(data={"sub": str(user.id)})
     response = JSONResponse(content={"access_token": access_token, "token_type": "bearer"})
     response.set_cookie(
         key="refresh_token",
@@ -114,54 +77,39 @@ def refresh(refresh_token: str = Cookie(default=None)):
 def verify(request: Request, token: str, session: Session = Depends(get_session)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        purpose: str = payload.get("purpose")
-        if purpose != "verify_email":
-            raise HTTPException(status_code=400, detail="Invalid token")
-        expiration = payload.get("exp")
-        if expiration is None:
-            raise HTTPException(status_code=400, detail="Invalid token")
-        
-        user_id: str = payload.get("sub")
-        if user_id is None:
-            raise HTTPException(status_code=401, detail="Invalid token")
-
-        user = session.exec(select(User).where(User.id == UUID(user_id))).first()
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-        if user.is_verified:
-            raise HTTPException(status_code=400, detail="User already verified")
-
-        user.is_verified = True
-        session.add(user)
-        session.commit()
-        session.refresh(user)
-        refresh_token = create_refresh_token(data={"sub": str(user.id)})
-        access_token = create_access_token(data={"sub": str(user.id)})
-        response = JSONResponse(content={"access_token": access_token, "token_type": "bearer", "detail": "Email verified successfully"})
-        response.set_cookie(
-            key="refresh_token",
-            value=refresh_token,
-            httponly=True,
-            samesite="lax",
-            secure=True,
-            path="/auth",
-            max_age=604800
-        )
-        
-        return response
-
+        user = auth_service.verify_email(session, payload)
+    except auth_service.InvalidTokenClaims:
+        raise HTTPException(status_code=400, detail="Invalid token")
+    except auth_service.MissingSubject:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    except auth_service.UserNotFound:
+        raise HTTPException(status_code=404, detail="User not found")
+    except auth_service.AlreadyVerified:
+        raise HTTPException(status_code=400, detail="User already verified")
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=400, detail="Token has expired")
     except jwt.PyJWTError:
         raise HTTPException(status_code=400, detail="Invalid token")
     except IntegrityError:
         raise HTTPException(status_code=400, detail="Database integrity error")
-        
-        
+
+    refresh_token = create_refresh_token(data={"sub": str(user.id)})
+    access_token = create_access_token(data={"sub": str(user.id)})
+    response = JSONResponse(content={"access_token": access_token, "token_type": "bearer", "detail": "Email verified successfully"})
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        samesite="lax",
+        secure=True,
+        path="/auth",
+        max_age=604800
+    )
+
+    return response
 
 
-
-@router.post("/logout")        
+@router.post("/logout")
 def logout():
     response = JSONResponse(content={"message": "Logged out successfully"})
     response.delete_cookie(key="refresh_token", path="/auth")

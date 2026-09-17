@@ -1,9 +1,9 @@
 from tests.signup_helper import signup_helper
 from sqlmodel import select
-from database import User
-from security import checkuser
+from models import User
+from core.security import checkuser
 from fastapi.security import HTTPAuthorizationCredentials
-from security import create_verify_token
+from core.security import create_verify_token
 def test_signup_simple(client, session):
     response = client.post("/auth/signup", json={
         "user": "testuser",

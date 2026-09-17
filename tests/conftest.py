@@ -11,8 +11,8 @@ from sqlmodel import SQLModel, Session, create_engine
 from sqlalchemy.pool import StaticPool
 
 from main import app
-from database import get_session
-from limiter import limiter
+from core.database import get_session
+from core.limiter import limiter
 
 test_engine = create_engine(
     "sqlite://",
