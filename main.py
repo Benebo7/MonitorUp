@@ -49,7 +49,9 @@ async def log_requests(request: Request, call_next):
         f"{request.method} {request.url.path} completed_in={process_time:.2f}ms status_code={response.status_code} request_id={request_id}"
     )
     return response
-
+@app.router.get("/health")
+async def health_check():
+    return {"status": "ok"}
 app.include_router(auth.router)
 app.include_router(monitor.router)
 app.include_router(admin.router)

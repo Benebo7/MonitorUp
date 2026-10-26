@@ -28,6 +28,31 @@ spec:
             limits:
               cpu: 500m
               memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+              scheme: HTTP
+            periodSeconds: 3
+            failureThreshold: 3
+            successThreshold: 1
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+              scheme: HTTP
+            periodSeconds: 10
+            failureThreshold: 3
+            successThreshold: 1
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8000
+              scheme: HTTP
+            periodSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
+          
 ---
 apiVersion: v1
 kind: Service

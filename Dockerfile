@@ -19,6 +19,9 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
+RUN apt-get update && apt-get install -y --no-install-recommends tini \
+    && rm -rf /var/lib/apt/lists/*  
+
 # Cache das deps Python: só reinstala se requirements.txt mudar
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
@@ -29,4 +32,5 @@ COPY . .
 # Traz o dist já buildado do stage do frontend
 COPY --from=frontend /frontend/dist ./frontend/dist
 
+ENTRYPOINT ["/usr/bin/tini", "--"]
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
