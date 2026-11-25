@@ -55,11 +55,12 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.8.0
         with:
           ssh-private-key: ${{ secrets.DROPLET_SSH_KEY }}
 
       - name: Deploy
-        run: |
-          ssh -o StrictHostKeyChecking=no azureuser@158.23.16.113 "cd ~/MonitorUp && git fetch origin && git reset --hard origin/main && docker compose down && docker compose -f docker-compose.prod.yml pull && docker compose -f docker-compose.prod.yml run --rm api alembic upgrade head && docker compose -f docker-compose.prod.yml up -d"
+        run: bash ./scripts/deploy.sh
